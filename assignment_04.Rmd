@@ -1,0 +1,70 @@
+---
+title: "Assignment 04"
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('tidyverse')
+```
+
+
+
+Complete a hypothesis test on the `InsectSprays` data (`dat` below)
+
+```{r}
+data("InsectSprays")
+dat = InsectSprays %>%
+  rename(insects = count) %>%
+  filter(spray == 'A' | spray == 'B')
+dat
+```
+
+Begin your hypothesis test here. You can do it with both the analytical approach (`t.test`)  and the permutation test technique.
+
+```{r}
+
+```
+
+
+
+
+
+
+
+## Explore the Data - Wine Data
+Data from kaggle.com <https://www.kaggle.com/zynicide/wine-reviews>
+
+
+#### Assignment  
+
+If you were head of purchasing for a liquor store, what would you choose to buy and why?
+
+```{r, message = FALSE, warning = FALSE}
+dat = read_csv('https://foco-ds-portal-files.s3.amazonaws.com/winemag-data-130k-v2.csv')
+head(dat)
+```
+
+
+Show summary statistics (note anything interesting)
+```{r}
+dat %>% 
+```
+
+
+Clean your data & deal with NA (note how / why you handle this)
+```{r}
+clean_dat = dat %>% 
+```
+
+
+Explore the data via EDA methods from R4DS book
+```{r}
+# Example
+clean_dat %>%
+  ggplot(aes()) %>% 
+```
+
+
+
+## Highlight anything interesting that you would want to look into below:

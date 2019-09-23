@@ -1,0 +1,395 @@
+---
+title: "In Class"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('tidyverse')
+library('modelr')
+```
+
+
+
+# Revisiting hypothesis testing:
+
+```{r}
+data("chickwts")
+dat = chickwts
+head(dat)
+dat
+```
+
+
+```{r}
+clean_dat = dat %>%
+  filter(feed == 'meatmeal' | feed == 'soybean')
+
+clean_dat %>%
+  ggplot(aes(x = weight, col = feed, fill = feed)) +
+  geom_density(alpha = 0.4)
+```
+
+
+The analytical technique - the t-test.
+```{r}
+t.test(clean_dat %>% filter(feed == 'meatmeal') %>% select(weight), 
+       clean_dat %>% filter(feed == 'soybean') %>% select(weight))
+```
+
+Instead of just randomly using a t-test, what does this mean?
+
+
+Computational method - permutation testing (utilizing resampling method)
+
+```{r}
+meatmeal = clean_dat %>%
+  filter(feed == 'meatmeal')
+soybean = clean_dat %>%
+  filter(feed == 'soybean')
+
+original_mean_diff = mean(meatmeal$weight) - mean(soybean$weight)
+original_mean_diff
+```
+
+```{r}
+# Throw them all into a pot and then relabel them to find a difference
+mean_diffs = c()
+pool_of_weights = clean_dat %>% select(weight) %>% pull() #pull creates vector
+
+# Indices
+meatmeal_end = nrow(meatmeal)
+soybean_start = meatmeal_end + 1
+soybean_end = meatmeal_end + nrow(soybean)
+
+for(i in 1:10){
+  random_indices = sample(length(pool_of_weights))
+  sample_meatmeal = pool_of_weights[random_indices[1:meatmeal_end]]
+  sample_soybean = pool_of_weights[random_indices[soybean_start:soybean_end]]
+  mean_diffs[i] = mean(sample_meatmeal) - mean(sample_soybean)
+}
+mean_diffs
+```
+
+```{r}
+hist_data = tibble(mean_diffs = mean_diffs)
+hist_data %>%
+  ggplot() +
+  geom_histogram(aes(x = mean_diffs), bins = 10) + 
+  geom_vline(xintercept = original_mean_diff, col = 'red') # original difference
+```
+
+
+
+```{r}
+# Throw them all into a pot and then relabel them to find a difference
+mean_diffs = c()
+for(i in 1:50){
+  random_indices = sample(length(pool_of_weights))
+  sample_meatmeal = pool_of_weights[random_indices[1:meatmeal_end]]
+  sample_soybean = pool_of_weights[random_indices[soybean_start:soybean_end]]
+  mean_diffs[i] = mean(sample_meatmeal) - mean(sample_soybean)
+}
+```
+
+```{r}
+hist_data = tibble(mean_diffs = mean_diffs)
+hist_data %>%
+  ggplot() +
+  geom_histogram(aes(x = mean_diffs), bins = 10) + 
+  geom_vline(xintercept = original_mean_diff, col = 'red') # original difference
+```
+
+
+
+```{r}
+# Throw them all into a pot and then relabel them to find a difference
+mean_diffs = c()
+for(i in 1:10000){
+  random_indices = sample(length(pool_of_weights))
+  sample_meatmeal = pool_of_weights[random_indices[1:meatmeal_end]]
+  sample_soybean = pool_of_weights[random_indices[soybean_start:soybean_end]]
+  mean_diffs[i] = mean(sample_meatmeal) - mean(sample_soybean)
+}
+```
+
+```{r}
+hist_data = tibble(mean_diffs = mean_diffs)
+hist_data %>%
+  ggplot() +
+  geom_histogram(aes(x = mean_diffs), bins = 30) + 
+  geom_vline(xintercept = original_mean_diff, col = 'red') +  # original difference 
+  geom_vline(xintercept = mean(mean_diffs) + 2*sd(mean_diffs), col = 'blue') # standard deviation
+```
+
+Remember, the null hypothesis is that there would be no difference between the means. This chart shows what would happen if that were the case. The red line represents the difference between the means we found, the histogram in the back is a representation of the underlying distributions.
+
+In this case, we would say there is not enough evidence to reject the null hypothesis at the p = 0.05 level.
+
+
+Let's try again for another two types of feed.
+
+
+
+```{r}
+clean_dat = dat %>%
+  filter(feed == 'linseed' | feed == 'casein')
+
+clean_dat %>%
+  ggplot(aes(x = weight, col = feed, fill = feed)) +
+  geom_density(alpha = 0.4)
+```
+
+
+```{r}
+t.test(clean_dat %>% filter(feed == 'linseed') %>% select(weight), 
+       clean_dat %>% filter(feed == 'casein') %>% select(weight))
+```
+
+Instead of just randomly using a t-test, what does this mean?
+
+```{r}
+linseed = clean_dat %>%
+  filter(feed == 'linseed')
+casein = clean_dat %>%
+  filter(feed == 'casein')
+
+original_mean_diff = mean(linseed$weight) - mean(casein$weight)
+original_mean_diff
+```
+
+```{r}
+# Throw them all into a pot and then relabel them to find a difference
+mean_diffs = c()
+pool_of_weights = clean_dat %>% select(weight) %>% pull() #pull creates vector
+
+# Indices
+linseed_end = nrow(linseed)
+casein_start = linseed_end + 1
+casein_end = linseed_end + nrow(casein)
+
+for(i in 1:10){
+  random_indices = sample(length(pool_of_weights))
+  sample_linseed = pool_of_weights[random_indices[1:linseed_end]]
+  sample_casein = pool_of_weights[random_indices[casein_start:casein_end]]
+  mean_diffs[i] = mean(sample_linseed) - mean(sample_casein)
+}
+mean_diffs
+```
+
+```{r}
+hist_data = tibble(mean_diffs = mean_diffs)
+hist_data %>%
+  ggplot() +
+  geom_histogram(aes(x = mean_diffs), bins = 10) + 
+  geom_vline(xintercept = original_mean_diff, col = 'red') # original difference
+```
+
+
+
+```{r}
+# Throw them all into a pot and then relabel them to find a difference
+mean_diffs = c()
+for(i in 1:50){
+  random_indices = sample(length(pool_of_weights))
+  sample_linseed = pool_of_weights[random_indices[1:linseed_end]]
+  sample_casein = pool_of_weights[random_indices[casein_start:casein_end]]
+  mean_diffs[i] = mean(sample_linseed) - mean(sample_casein)
+}
+```
+
+```{r}
+hist_data = tibble(mean_diffs = mean_diffs)
+hist_data %>%
+  ggplot() +
+  geom_histogram(aes(x = mean_diffs), bins = 10) + 
+  geom_vline(xintercept = original_mean_diff, col = 'red') # original difference
+```
+
+
+
+```{r}
+# Throw them all into a pot and then relabel them to find a difference
+mean_diffs = c()
+for(i in 1:10000){
+  random_indices = sample(length(pool_of_weights))
+  sample_linseed = pool_of_weights[random_indices[1:linseed_end]]
+  sample_casein = pool_of_weights[random_indices[casein_start:casein_end]]
+  mean_diffs[i] = mean(sample_linseed) - mean(sample_casein)
+}
+```
+
+```{r}
+hist_data = tibble(mean_diffs = mean_diffs)
+hist_data %>%
+  ggplot() +
+  geom_histogram(aes(x = mean_diffs), bins = 30) + 
+  geom_vline(xintercept = original_mean_diff, col = 'red') +  # original difference 
+  geom_vline(xintercept = mean(mean_diffs) - 2*sd(mean_diffs), col = 'blue') # standard deviation
+```
+
+
+
+This indicates that the difference is way at the tail end of the distribution and that seeing something like this would be VERY RARE.
+
+
+
+
+
+
+# Should I buy this wine????  
+
+Predicting prices based off of data in order to determine if I am getting a bargain, normal price, or ripped off.
+
+
+## Explore the Data - Wine Data
+Data from kaggle.com <https://www.kaggle.com/zynicide/wine-reviews>
+```{r, message = FALSE, warning = FALSE}
+dat = read_csv('https://foco-ds-portal-files.s3.amazonaws.com/winemag-data_first150k.csv')
+head(dat)
+```
+
+```{r}
+glimpse(dat)
+```
+
+```{r}
+summary(dat)
+```
+
+```{r}
+colSums(is.na(dat))
+```
+
+```{r}
+dat %>%
+  filter(is.na(country))
+```
+
+Data modifications:  
+
+  - Drop column `X1` - it does not represent anything
+  - Filter out `is.na(country)` - small percentage of data set that has repetition, which may indicate it was overlooked for data integrity
+  - Rename `region_1` to `region` and `region_2` to `sub_region`  
+  - Filter out `is.na(price)` because I am trying to predict price, these do not help
+  - Filter out `price < 150` because anything outside of that range is not important to me
+
+
+```{r}
+clean_dat = dat %>%
+  select(-X1, -description) %>%
+  filter(!is.na(province)) %>%
+  filter(!is.na(price)) %>%
+  filter(price < 150) %>%
+  rename(region = region_1,
+         sub_region = region_2)
+summary(clean_dat)
+```
+
+
+```{r}
+clean_dat %>%
+  ggplot(aes(x = price)) + 
+  geom_histogram(bins = 40)
+```
+
+Notes:  
+
+  - Data is right-skewed and the majority of the data appears to lie below the $50 mark
+  - This is in line with common sense
+
+```{r}
+clean_dat %>%
+  ggplot(aes(x = country, y = price)) +
+  geom_boxplot()
+```
+
+
+```{r}
+clean_dat %>%
+  ggplot(aes(x = fct_reorder(country, price), y = price)) +
+  geom_boxplot() + 
+  coord_flip()
+```
+
+
+```{r}
+clean_dat %>%
+  group_by(country) %>%
+  filter(n() > 50) %>%
+  ungroup() %>%
+  ggplot(aes(x = fct_reorder(country, price), y = price)) +
+  geom_boxplot() + 
+  coord_flip()
+```
+
+Notes:  
+
+  - The USA has the highest prices
+    - This may be related to currency or tariffs
+    - May be related to brand / reputation
+  - After USA, there are a number of countries with far less data that appear higher in the rankings compared to places where you would expect to see wine from (Italy, France, etc.)  
+    - Likely due to sampling selection. Only certain bottles would ever be found from those countries because so few can be exported.
+  - Lots of outliers in the data
+    - Skewed distribution appears to be across all countries
+
+
+Check the relationship between price & points (do points matter??)
+```{r}
+clean_dat %>%
+  ggplot(aes(x = points, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = 'lm')
+```
+
+Clearly, price is rounded and needs to be examined slightly differently
+```{r}
+clean_dat %>%
+  ggplot(aes(x = points, y = price)) + 
+  geom_count()
+```
+
+
+```{r}
+clean_dat %>%
+  ggplot(aes(x = points, y = price)) + 
+  geom_boxplot(aes(group = cut_width(points, 2))) + 
+  geom_smooth(method = 'lm')
+```
+
+
+Linear relationship makes some sense here, probably okay to hold it constant by using the `modelr` package
+```{r}
+mod = lm(price ~ points, data = clean_dat)
+
+clean_dat2 = clean_dat %>%
+  add_residuals(mod)
+
+clean_dat2 %>%
+  ggplot(aes(x = points, y = resid)) + 
+  geom_count()
+```
+
+
+hmmm... it overshot at the beginning (can see issues in residuals)
+```{r}
+clean_dat %>%
+  ggplot(aes(x = log(points), y = log(price))) + 
+  geom_count() + 
+  geom_smooth(method = 'lm')
+```
+
+
+```{r}
+mod = lm(log(price) ~ log(points), data = clean_dat)
+
+clean_dat2 = clean_dat %>%
+  add_residuals(mod) %>%
+  mutate(resid = exp(resid))
+
+clean_dat2 %>%
+  ggplot(aes(x = points, y = resid)) + 
+  geom_count()
+```
+
+
