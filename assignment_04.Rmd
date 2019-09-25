@@ -21,12 +21,51 @@ dat
 ```
 
 Begin your hypothesis test here. You can do it with both the analytical approach (`t.test`)  and the permutation test technique.
+```{r}
+tmp <- dat %>%
+  group_by(spray) %>%
+  summarize(mean_insects = mean(insects))
+
+A <- tmp %>% filter(spray == 'A')
+B <- tmp %>% filter(spray == 'B')
+
+mean_diff_assumption = A$mean_insects - B$mean_insects
+mean_diff_assumption
+```
+
+
+```{r}
+pool_of_insects = dat %>% select(insects) %>% pull()
+mean_diffs = c()
+
+for(i in 1:10000) {
+  pool_indicies = sample(length(insects))
+  spray_a = mean(pool_of_insects[pool_indicies[1:12]])
+  spray_b = mean(pool_of_insects[pool_indicies[13:14]])
+  mean_diff = spray_a - spray_b
+  mean_diffs[i] = mean_diff 
+}
+
+insect_final = tibble(mean_diff = mean_diffs)
+
+std_dev = sd(mean_diffs)
+total_mean_diff = mean(mean_diffs)
+
+
+insect_final %>%
+  ggplot(aes(x=mean_diff)) +
+  geom_histogram(bins = 30) +
+  geom_vline(xintercept = mean_diff_assumption, col = 'red') +
+  geom_vline(xintercept = total_mean_diff - 2*std_dev , col = 'blue') +
+  geom_vline(xintercept = total_mean_diff + 2*std_dev , col = 'blue')
+  
+# Inside 95% range...inconclusive ... NULL HYPOTHESIS
+```
+
 
 ```{r}
 
 ```
-
-
 
 
 
@@ -48,21 +87,70 @@ head(dat)
 
 Show summary statistics (note anything interesting)
 ```{r}
-dat %>% 
+# There are 129971 wine tastings
+(
+  dat %>%
+  count()
+)
+
+# There are 118840 wines
+(
+  dat %>%
+    distinct(title) %>%
+    summarize(
+      n = n(),
+    )
+)
+
+# These wines were tasted between 1 and 2 times
+(dat %>%
+  group_by(country, province, title) %>%
+  summarize(
+   n = n(),
+  ) %>%
+  arrange(desc(n))
+)
+
+# More wines were tasted in California
+(dat %>% 
+  group_by(country, province) %>%
+  summarize(
+   n = n(),
+  ) %>%
+  arrange(desc(n))
+) 
+
+
 ```
 
 
 Clean your data & deal with NA (note how / why you handle this)
 ```{r}
 clean_dat = dat %>% 
+  # # remove continuous values
+  filter(
+    !is.na(price), # from 129,971 to 120,975
+  ) %>%
+  # alter discrete values to "Unkown"
+   mutate(
+    region_1 = ifelse(is.na(region_1), "Unknown", region_1),
+    region_2 = ifelse(is.na(region_2), "Unknown", region_2),
+    taster_name = ifelse(is.na(taster_name), "Unknown", taster_name),
+    taster_twitter_handle = ifelse(is.na(taster_twitter_handle), "Unknown", taster_twitter_handle),
+    country = ifelse(is.na(country), "Unknown", country),
+    province = ifelse(is.na(province), "Unknown", province)
+  )
 ```
 
 
 Explore the data via EDA methods from R4DS book
 ```{r}
+View(clean_dat)
 # Example
 clean_dat %>%
-  ggplot(aes()) %>% 
+  group_by(country) %>%
+  ggplot(aes(x=country,y=price)) +
+  geom_boxplot()
 ```
 
 
